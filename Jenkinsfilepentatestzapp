@@ -23,7 +23,7 @@ pipeline {
                 script {
                     sh '''
                         git pull origin main
-                        curl -o /home/Projects/abcd-student/.zap/passive.yaml https://github.com/mt524/abcd-student/.zap/passive.yaml
+                        curl -o /home/Projects/abcd-student/.zap/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
                     '''
                 }
             }
