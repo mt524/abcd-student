@@ -22,9 +22,10 @@ pipeline {
             steps {
                 script {
                     sh '''
+                        sh 'pwd'
                         git pull origin main
                         echo "Pobieranie passive.yaml..."
-                        curl -o /home/Projects/abcd-student/.zap/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
+                       // curl -o /home/Projects/abcd-student/.zap/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
                     '''
                 }
             }
