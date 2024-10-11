@@ -29,7 +29,7 @@ pipeline {
                         ls -al
                         git pull origin main
                         echo "Pobieranie passive.yaml..."
-                        curl -o /home/Projects/abcd-student/.zap/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
+                        curl -o /var/jenkins_home/workspace/Penta_test_zapp/.zap/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
                     '''
                 }
             }
