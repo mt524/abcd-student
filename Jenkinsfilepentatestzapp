@@ -22,6 +22,9 @@ pipeline {
             steps {
                 script {
                     sh '''
+                        echo $container
+                        ls -al
+                        chmod 777 .zap
                         ls -al
                         git pull origin main
                         echo "Pobieranie passive.yaml..."
