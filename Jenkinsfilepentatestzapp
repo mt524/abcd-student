@@ -17,18 +17,7 @@ pipeline {
                 sh 'mkdir -p results/'
             }
         }
-       stage('DAST') {
-    steps {
-        // Usuń istniejący kontener zap, jeśli istnieje
-        sh 'docker rm -f zap || true'
-
-        // Uruchom kontener juice-shop
-        sh '''
-            docker run --name juice-shop -d --rm \
-            -p 3000:3000 bkimminich/juice-shop
-            sleep 10
-        '''
-        // Dodaj etap aktualizacji passive.yaml
+ // Dodaj etap aktualizacji passive.yaml
         stage('Update passive.yaml') {
             steps {
                 script {
@@ -39,6 +28,18 @@ pipeline {
                 }
             }
         }
+       stage('DAST') {
+        steps {
+            // Usuń istniejący kontener zap, jeśli istnieje
+            sh 'docker rm -f zap || true'
+    
+            // Uruchom kontener juice-shop
+            sh '''
+                docker run --name juice-shop -d --rm \
+                -p 3000:3000 bkimminich/juice-shop
+                sleep 10
+            '''
+       
         // Uruchom kontener zap i wykonaj skanowanie
         sh '''
     docker run --name zap \
