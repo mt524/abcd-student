@@ -28,7 +28,17 @@ pipeline {
             -p 3000:3000 bkimminich/juice-shop
             sleep 10
         '''
-
+        // Dodaj etap aktualizacji passive.yaml
+        stage('Update passive.yaml') {
+            steps {
+                script {
+                    sh '''
+                        git pull origin main
+                        curl -o /home/Projects/abcd-student/.zap/passive.yaml https://github.com/mt524/abcd-student/.zap/passive.yaml
+                    '''
+                }
+            }
+        }
         // Uruchom kontener zap i wykonaj skanowanie
         sh '''
     docker run --name zap \
