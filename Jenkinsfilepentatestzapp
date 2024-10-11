@@ -19,6 +19,10 @@ pipeline {
         }
         stage('DAST') { // Added missing curly brace here
             steps {
+
+                sh '''
+                    docker rm -f zap || true'
+                '''
                 sh '''
                     docker run --name juice-shop -d --rm \
                     -p 3000:3000 bkimminich/juice-shop
