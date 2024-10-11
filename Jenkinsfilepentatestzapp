@@ -18,21 +18,21 @@ pipeline {
             }
         }
  // Dodaj etap aktualizacji passive.yaml
-        stage('Update passive.yaml') {
-            steps {
-                script {
-                    sh '''
-                        -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
-                        pwd
-                        echo $container
-                        ls -al /zap/
-                        git pull origin main
-                        echo "Pobieranie passive.yaml..."
-                        curl -o /zap/wrk/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
-                    '''
-                }
-            }
-        }
+        //stage('Update passive.yaml') {
+        //    steps {
+        //        script {
+        //            sh '''
+        //                -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
+        //                pwd
+        //                echo $container
+        //                ls -al /zap/
+        //                git pull origin main
+        //                echo "Pobieranie passive.yaml..."
+        //                curl -o /zap/wrk/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
+        //            '''
+        //        }
+        //    }
+       // }
        stage('DAST') {
         steps {
             // Usuń istniejący kontener zap, jeśli istnieje
