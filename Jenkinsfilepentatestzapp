@@ -46,11 +46,12 @@ pipeline {
                             echo '1234' >/zap/wrk/reports/skan2.txt;  # Użyj pełnej ścieżki
                             
                             ls -la /zap/wrk/;  # Sprawdź zawartość całego katalogu
-                            cp /zap/wrk/reports/skan1.txt /zap/wrk/;
+                            cp /zap/wrk/reports/skan2.txt /zap/wrk/;
                         echo 'katalog  /zap/wrk/reports';
                         ls -la /zap/wrk/reports;
                         "
                 '''
+                docker cp zap:/zap/wrk/reports/skan2.txt ${WORKSPACE}/results/skan2.txt;
             }
         }
         stage('Clean Up Containers') {
