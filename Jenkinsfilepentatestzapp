@@ -17,7 +17,16 @@ pipeline {
                 sh 'mkdir -p results/'
             }
         }
-       
+        stage('Update passive.yaml') {
+            steps {
+                script {
+                    sh '''
+                        echo "Pobieranie passive.yaml..."
+                        curl -o /home/Projects/abcd-student/.zap/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
+                    '''
+                }
+            }
+        }
         stage('DAST') {
             steps {
                 // Usuń istniejący kontener zap, jeśli istnieje
@@ -40,11 +49,12 @@ pipeline {
             }
             post {
                 always {
-                    // Sprawdź, czy raport HTML istnieje przed próbą skopiowania
                     script {
+                        // Sprawdź, czy raporty istnieją
                         def htmlReportExists = sh(script: 'docker exec zap ls /zap/wrk/reports/zap_html_report.html', returnStatus: true) == 0
                         def xmlReportExists = sh(script: 'docker exec zap ls /zap/wrk/reports/zap_xml_report.xml', returnStatus: true) == 0
 
+                        // Kopiuj raporty, jeśli istnieją
                         if (htmlReportExists) {
                             sh 'docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html'
                         } else {
@@ -57,11 +67,9 @@ pipeline {
                             echo 'XML report does not exist.'
                         }
                     }
-                    echo 'Sleeping for 15 seconds...'
-                    sh 'sleep 15'
-                    // Zatrzymaj i usuń kontenery
+                    // Upewnij się, że kontenery są zatrzymane
                     sh 'docker stop zap juice-shop || true'
-                    sh 'docker rm zap || true'
+                    sh 'docker rm zap juice-shop || true'
                 }
             }
         }
@@ -71,7 +79,14 @@ pipeline {
             echo 'Archiving results...'
             archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
             echo 'Sending reports to DefectDojo...'
-            defectDojoPublisher(artifact: 'results/zap_xml_report.xml', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'michal.tomczak@opi.org.pl')
+            // Sprawdź, czy raport XML istnieje przed wysłaniem
+            script {
+                if (fileExists('results/zap_xml_report.xml')) {
+                    defectDojoPublisher(artifact: 'results/zap_xml_report.xml', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'michal.tomczak@opi.org.pl')
+                } else {
+                    echo 'XML report does not exist, skipping DefectDojo submission.'
+                }
+            }
         }
     }
 }
