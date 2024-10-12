@@ -51,7 +51,7 @@ pipeline {
                         ls -la /zap/wrk/reports;
                         "
                 '''
-                docker cp zap:/zap/wrk/reports/skan2.txt ${WORKSPACE}/results/skan2.txt;
+                sh 'docker cp zap:/zap/wrk/reports/skan2.txt ${WORKSPACE}/results/skan2.txt'
             }
         }
         stage('Clean Up Containers') {
