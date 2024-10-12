@@ -17,16 +17,7 @@ pipeline {
                 sh 'mkdir -p results/'
             }
         }
-        stage('Update passive.yaml') {
-            steps {
-                script {
-                    sh '''
-                        echo "Pobieranie passive.yaml..."
-                        curl -o /home/Projects/abcd-student/.zap/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
-                    '''
-                }
-            }
-        }
+       
         stage('DAST') {
             steps {
                 // Usuń istniejący kontener zap, jeśli istnieje
