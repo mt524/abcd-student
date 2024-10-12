@@ -17,74 +17,65 @@ pipeline {
                 sh 'mkdir -p results/'
             }
         }
- // Dodaj etap aktualizacji passive.yaml
-        //stage('Update passive.yaml') {
-        //    steps {
-        //        script {
-        //            sh '''
-        //                -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
-        //                pwd
-        //                echo $container
-        //                ls -al /zap/
-        //                git pull origin main
-        //                echo "Pobieranie passive.yaml..."
-        //                curl -o /zap/wrk/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
-        //            '''
-        //        }
-        //    }
-       // }
-       stage('DAST') {
-        steps {
-            // Usuń istniejący kontener zap, jeśli istnieje
-            sh 'docker rm -f zap || true'
-    
-            // Uruchom kontener juice-shop
-            sh '''
-                docker run --name juice-shop -d --rm \
-                -p 3000:3000 bkimminich/juice-shop
-                sleep 10
-            '''
-       
-        // Uruchom kontener zap i wykonaj skanowanie
-        sh '''
-    docker run --name zap \
-        -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
-        -t ghcr.io/zaproxy/zaproxy:stable \
-        bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml && tail -f /dev/null"
-'''
-
-    }
-    post {
-        always {
-            // Sprawdź, czy raport HTML istnieje przed próbą skopiowania
-            script {
-                def htmlReportExists = sh(script: 'docker exec zap ls /zap/wrk/reports/zap_html_report.html', returnStatus: true) == 0
-                def xmlReportExists = sh(script: 'docker exec zap ls /zap/wrk/reports/zap_xml_report.xml', returnStatus: true) == 0
-
-                if (htmlReportExists) {
-                    sh 'docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html'
-                } else {
-                    echo 'HTML report does not exist.'
-                }
-
-                if (xmlReportExists) {
-                    sh 'docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml'
-                } else {
-                    echo 'XML report does not exist.'
+        stage('Update passive.yaml') {
+            steps {
+                script {
+                    sh '''
+                        echo "Pobieranie passive.yaml..."
+                        curl -o /home/Projects/abcd-student/.zap/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
+                    '''
                 }
             }
-             echo 'Sleep 15'
-             sh 'sleep 15'
-            // Zatrzymaj i usuń kontenery
-            sh 'docker stop zap juice-shop || true'
-            sh 'docker rm zap || true'
+        }
+        stage('DAST') {
+            steps {
+                // Usuń istniejący kontener zap, jeśli istnieje
+                sh 'docker rm -f zap || true'
+    
+                // Uruchom kontener juice-shop
+                sh '''
+                    docker run --name juice-shop -d --rm \
+                    -p 3000:3000 bkimminich/juice-shop
+                    sleep 10
+                '''
+       
+                // Uruchom kontener zap i wykonaj skanowanie
+                sh '''
+                    docker run --name zap \
+                    -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
+                    -t ghcr.io/zaproxy/zaproxy:stable \
+                    bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml && tail -f /dev/null"
+                '''
+            }
+            post {
+                always {
+                    // Sprawdź, czy raport HTML istnieje przed próbą skopiowania
+                    script {
+                        def htmlReportExists = sh(script: 'docker exec zap ls /zap/wrk/reports/zap_html_report.html', returnStatus: true) == 0
+                        def xmlReportExists = sh(script: 'docker exec zap ls /zap/wrk/reports/zap_xml_report.xml', returnStatus: true) == 0
+
+                        if (htmlReportExists) {
+                            sh 'docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html'
+                        } else {
+                            echo 'HTML report does not exist.'
+                        }
+
+                        if (xmlReportExists) {
+                            sh 'docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml'
+                        } else {
+                            echo 'XML report does not exist.'
+                        }
+                    }
+                    echo 'Sleeping for 15 seconds...'
+                    sh 'sleep 15'
+                    // Zatrzymaj i usuń kontenery
+                    sh 'docker stop zap juice-shop || true'
+                    sh 'docker rm zap || true'
+                }
+            }
         }
     }
-} // Close the DAST stage
-
-    } // Close the stages block
-
-    post { // This post block is correctly positioned here
+    post {
         always {
             echo 'Archiving results...'
             archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
