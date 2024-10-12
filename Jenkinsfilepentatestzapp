@@ -30,6 +30,10 @@ pipeline {
                 '''
        
                 // Uruchom kontener zap z podmontowaniem katalogu results
+
+                // Przed uruchomieniem kontenera ZAP
+                    sh 'ls -la ${WORKSPACE}/results'
+                sh 'echo "Sprawdzanie katalogu /zap/wrk/reports"'
                 sh '''
                     docker run --name zap \
                         -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
