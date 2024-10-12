@@ -45,6 +45,7 @@ pipeline {
                             touch /zap/wrk/reports/skan1.txt;  # Użyj pełnej ścieżki
                             ls -la /zap/wrk/reports;
                             ls -la /zap/wrk/;  # Sprawdź zawartość całego katalogu
+                            cp /zap/wrk/reports/skan1.txt /zap/wrk/;
                         "
                 '''
             }
