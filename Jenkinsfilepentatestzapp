@@ -73,7 +73,8 @@ pipeline {
                     echo 'XML report does not exist.'
                 }
             }
-            // sh 'sleep 120'
+             echo 'Sleep 15'
+             sh 'sleep 15'
             // Zatrzymaj i usuń kontenery
             sh 'docker stop zap juice-shop || true'
             sh 'docker rm zap || true'
