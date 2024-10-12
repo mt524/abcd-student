@@ -33,6 +33,7 @@ pipeline {
 
                sh '''
                     echo "Sprawdzanie katalogu ${WORKSPACE}/results"
+                    chmod 777 ${WORKSPACE}/results
                     ls -la ${WORKSPACE}/results
                     docker run --name zap \
                         -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
