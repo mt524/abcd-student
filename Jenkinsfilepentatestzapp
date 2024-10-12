@@ -17,16 +17,6 @@ pipeline {
                 sh 'mkdir -p results/'
             }
         }
-        stage('Update passive.yaml') {
-            steps {
-                script {
-                    sh '''
-                        echo "Pobieranie passive.yaml..."
-                        curl -o /home/Projects/abcd-student/.zap/passive.yaml https://raw.githubusercontent.com/mt524/abcd-student/main/.zap/passive.yaml
-                    '''
-                }
-            }
-        }
         stage('DAST') {
             steps {
                 // Usuń istniejący kontener zap, jeśli istnieje
@@ -47,14 +37,17 @@ pipeline {
                     bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml && tail -f /dev/null"
                 '''
             }
-            post {
-                always {
-                    script {
-                        // Sprawdź, czy raporty istnieją
+        }
+        stage('Copy Reports') {
+            steps {
+                script {
+                    // Sprawdź, czy kontener ZAP działa
+                    def isRunning = sh(script: 'docker ps -q -f name=zap', returnStatus: true) == 0
+                    if (isRunning) {
+                        // Sprawdź, czy raporty istnieją i kopiuj
                         def htmlReportExists = sh(script: 'docker exec zap ls /zap/wrk/reports/zap_html_report.html', returnStatus: true) == 0
                         def xmlReportExists = sh(script: 'docker exec zap ls /zap/wrk/reports/zap_xml_report.xml', returnStatus: true) == 0
 
-                        // Kopiuj raporty, jeśli istnieją
                         if (htmlReportExists) {
                             sh 'docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html'
                         } else {
@@ -66,11 +59,30 @@ pipeline {
                         } else {
                             echo 'XML report does not exist.'
                         }
+                    } else {
+                        echo 'ZAP container is not running. Skipping report copying.'
                     }
-                    // Upewnij się, że kontenery są zatrzymane
-                    sh 'docker stop zap juice-shop || true'
-                    sh 'docker rm zap juice-shop || true'
                 }
+            }
+        }
+        stage('Send Reports to DefectDojo') {
+            steps {
+                script {
+                    echo 'Sending reports to DefectDojo...'
+                    // Sprawdź, czy raport XML istnieje przed wysłaniem
+                    if (fileExists('results/zap_xml_report.xml')) {
+                        defectDojoPublisher(artifact: 'results/zap_xml_report.xml', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'michal.tomczak@opi.org.pl')
+                    } else {
+                        echo 'XML report does not exist, skipping DefectDojo submission.'
+                    }
+                }
+            }
+        }
+        stage('Clean Up Containers') {
+            steps {
+                // Zatrzymaj i usuń kontenery
+                sh 'docker stop zap juice-shop || true'
+                sh 'docker rm zap juice-shop || true'
             }
         }
     }
@@ -78,15 +90,6 @@ pipeline {
         always {
             echo 'Archiving results...'
             archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
-            echo 'Sending reports to DefectDojo...'
-            // Sprawdź, czy raport XML istnieje przed wysłaniem
-            script {
-                if (fileExists('results/zap_xml_report.xml')) {
-                    defectDojoPublisher(artifact: 'results/zap_xml_report.xml', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'michal.tomczak@opi.org.pl')
-                } else {
-                    echo 'XML report does not exist, skipping DefectDojo submission.'
-                }
-            }
         }
     }
 }
