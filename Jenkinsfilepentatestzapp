@@ -21,6 +21,7 @@ pipeline {
             steps {
                 // Usuń istniejący kontener zap, jeśli istnieje
                 sh 'docker rm -f zap || true'
+                sh 'docker stop juice-shop || true'
     
                 // Uruchom kontener juice-shop
                 sh '''
