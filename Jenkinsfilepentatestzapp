@@ -42,8 +42,9 @@ pipeline {
                                 echo 'Zawartość katalogu /zap/wrk przed skanowaniem:';
                                 ls -la /zap/wrk/;
                                 echo 'skanowanie';
-                            //zap.sh -cmd -addonupdate; 
-                            //zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml
+                                touch reports/skan1.txt
+                            // zap.sh -cmd -addonupdate; 
+                            // zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml
                         "
                 '''
             }
