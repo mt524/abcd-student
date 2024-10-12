@@ -43,13 +43,11 @@ pipeline {
                             ls -la /zap/wrk/;
                             echo 'skanowanie';
                             mkdir -p /zap/wrk/reports;  # Upewnij się, że katalog istnieje
-                            touch /zap/wrk/reports/skan1.txt;  # Użyj pełnej ścieżki
+                            echo '1234' >/zap/wrk/reports/skan2.txt;  # Użyj pełnej ścieżki
                             
                             ls -la /zap/wrk/;  # Sprawdź zawartość całego katalogu
                             cp /zap/wrk/reports/skan1.txt /zap/wrk/;
-                        echo 'katalog ${WORKSPACE}/results';
-                        ls -la ${WORKSPACE}/results;
-                         echo 'katalog  /zap/wrk/reports';
+                        echo 'katalog  /zap/wrk/reports';
                         ls -la /zap/wrk/reports;
                         "
                 '''
