@@ -31,23 +31,20 @@ pipeline {
        
                 // Uruchom kontener zap z podmontowaniem katalogu results
 
-                // Przed uruchomieniem kontenera ZAP
-                    sh 'ls -la ${WORKSPACE}/results'
-                    sh '''
+               sh '''
+                    echo "Sprawdzanie katalogu ${WORKSPACE}/results"
+                    ls -la ${WORKSPACE}/results
                     docker run --name zap \
                         -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
                         -v ${WORKSPACE}/results:/zap/wrk/reports:rw \
-                        -t ghcr.io/zaproxy/zaproxy:stable \
-                       bash -c "
-                                echo 'Zawartość katalogu /zap/wrk przed skanowaniem:';
-                                ls -la /zap/wrk/;
-                                echo 'skanowanie';
-                                touch reports/skan1.txt;
-                                ls -la /zap/wrk/reports;
-                                ls -la ${WORKSPACE}/results;
-                                
-                            // zap.sh -cmd -addonupdate; 
-                            // zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml
+                        -t --user root ghcr.io/zaproxy/zaproxy:stable bash -c "
+                            echo 'Zawartość katalogu /zap/wrk przed skanowaniem:';
+                            ls -la /zap/wrk/;
+                            echo 'skanowanie';
+                            mkdir -p /zap/wrk/reports;  # Upewnij się, że katalog istnieje
+                            touch /zap/wrk/reports/skan1.txt;  # Użyj pełnej ścieżki
+                            ls -la /zap/wrk/reports;
+                            ls -la /zap/wrk/;  # Sprawdź zawartość całego katalogu
                         "
                 '''
             }
