@@ -29,18 +29,15 @@ pipeline {
                     sleep 10
                 '''
        
-                // Uruchom kontener zap i wykonaj skanowanie, a następnie skopiuj raporty
+                // Uruchom kontener zap z podmontowaniem katalogu results
                 sh '''
                     docker run --name zap \
                         -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
+                        -v ${WORKSPACE}/results:/zap/wrk/reports:rw \
                         -t ghcr.io/zaproxy/zaproxy:stable \
                         bash -c "
                             zap.sh -cmd -addonupdate; 
-                            zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml; 
-                            if [ -d /zap/wrk/reports ]; then 
-                                docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html
-                                docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml
-                            fi
+                            zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml
                         "
                 '''
             }
@@ -49,7 +46,7 @@ pipeline {
             steps {
                 // Zatrzymaj i usuń kontenery
                 sh 'docker stop zap juice-shop || true'
-                sh 'docker rm zap || true'
+                sh 'docker rm zap juice-shop || true'
             }
         }
     }
