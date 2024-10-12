@@ -53,7 +53,7 @@ pipeline {
             steps {
                 // Zatrzymaj i usuń kontenery
                 sh 'docker stop zap juice-shop || true'
-                sh 'docker rm zap juice-shop || true'
+                sh 'docker rm zap || true'
             }
         }
     }
