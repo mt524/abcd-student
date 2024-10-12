@@ -17,57 +17,49 @@ pipeline {
                 sh 'mkdir -p results/'
             }
         }
-       stage('DAST') {
-    steps {
-        // Usuń istniejący kontener zap, jeśli istnieje
-        sh 'docker rm -f zap || true'
-        
-        // Uruchom kontener juice-shop
-        sh '''
-            docker run --name juice-shop -d --rm \
-            -p 3000:3000 bkimminich/juice-shop
-            sleep 10
-        '''
-        
-        // Uruchom kontener zap i wykonaj skanowanie
-        sh '''
-            docker run --name zap \
-                -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
-                -t ghcr.io/zaproxy/zaproxy:stable \
-                bash -c "zap.sh -cmd -addonupdate; \
-                          zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml && \
-                          tail -f /dev/null"
-        '''
-        
-        // Sprawdzenie stanu kontenera ZAP
-        sh 'docker logs zap || true'
-    }
-}
+        stage('DAST') {
+            steps {
+                // Usuń istniejący kontener zap, jeśli istnieje
+                sh 'docker rm -f zap || true'
+    
+                // Uruchom kontener juice-shop
+                sh '''
+                    docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
+                    sleep 10
+                '''
+       
+                // Uruchom kontener zap i wykonaj skanowanie
+                sh '''
+                    docker run --name zap \
+                        -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
+                        -t ghcr.io/zaproxy/zaproxy:stable \
+                        bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml"
+                '''
+            }
+        }
         stage('Copy Reports') {
             steps {
                 script {
-                    // Sprawdź, czy kontener zap działa przed kopiowaniem
-                    def isZapRunning = sh(script: 'docker ps -q -f name=zap', returnStatus: true) == 0
-                    if (isZapRunning) {
-                        // Sprawdź, czy raporty istnieją i skopiuj je
-                        def htmlReportExists = sh(script: 'docker exec zap ls /zap/wrk/reports/zap_html_report.html', returnStatus: true) == 0
-                        def xmlReportExists = sh(script: 'docker exec zap ls /zap/wrk/reports/zap_xml_report.xml', returnStatus: true) == 0
-
-                        if (htmlReportExists) {
-                            sh 'docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html'
-                        } else {
-                            echo 'HTML report does not exist.'
-                        }
-
-                        if (xmlReportExists) {
-                            sh 'docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml'
-                        } else {
-                            echo 'XML report does not exist.'
-                        }
+                    // Sprawdź, czy kontener zap działa
+                    def zapRunning = sh(script: 'docker ps -q -f name=zap', returnStatus: true) == 0
+                    
+                    if (zapRunning) {
+                        // Kopiowanie raportów
+                        sh '''
+                            docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html || echo "HTML report does not exist."
+                            docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml || echo "XML report does not exist."
+                        '''
                     } else {
-                        echo 'Container zap is not running. Skipping report copy.'
+                        echo 'ZAP container is not running. Skipping report copy.'
                     }
                 }
+            }
+        }
+        stage('Clean Up Containers') {
+            steps {
+                // Zatrzymaj i usuń kontenery
+                sh 'docker stop zap juice-shop || true'
+                sh 'docker rm zap || true'
             }
         }
     }
@@ -77,11 +69,6 @@ pipeline {
             archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
             echo 'Sending reports to DefectDojo...'
             defectDojoPublisher(artifact: 'results/zap_xml_report.xml', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'michal.tomczak@opi.org.pl')
-        }
-        cleanup {
-            echo 'Cleaning up containers...'
-            sh 'docker stop zap juice-shop || true'
-            sh 'docker rm zap juice-shop || true'
         }
     }
 }
