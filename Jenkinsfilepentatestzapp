@@ -28,31 +28,19 @@ pipeline {
                     sleep 10
                 '''
        
-                // Uruchom kontener zap i wykonaj skanowanie
+                // Uruchom kontener zap i wykonaj skanowanie, a następnie skopiuj raporty
                 sh '''
                     docker run --name zap \
                         -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
                         -t ghcr.io/zaproxy/zaproxy:stable \
-                        bash -c "zap.sh -cmd -addonupdate; zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml"
+                        bash -c "
+                            zap.sh -cmd -addonupdate; 
+                            zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml; 
+                            if [ -d /zap/wrk/reports ]; then 
+                                cp /zap/wrk/reports/zap_html_report.html /zap/wrk/reports/zap_xml_report.xml /zap/wrk/reports/; 
+                            fi
+                        "
                 '''
-            }
-        }
-        stage('Copy Reports') {
-            steps {
-                script {
-                    // Sprawdź, czy kontener zap działa
-                    def zapRunning = sh(script: 'docker ps -q -f name=zap', returnStatus: true) == 0
-                    
-                    if (zapRunning) {
-                        // Kopiowanie raportów
-                        sh '''
-                            docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html || echo "HTML report does not exist."
-                            docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml || echo "XML report does not exist."
-                        '''
-                    } else {
-                        echo 'ZAP container is not running. Skipping report copy.'
-                    }
-                }
             }
         }
         stage('Clean Up Containers') {
