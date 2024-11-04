@@ -1,4 +1,3 @@
-semgrep --config auto . --json > wyniki.json
 pipeline {
     agent any
     options {
