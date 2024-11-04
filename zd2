@@ -1,4 +1,4 @@
-ult/pipeline {
+pipeline {
     agent any
     options {
         skipDefaultCheckout(true)
