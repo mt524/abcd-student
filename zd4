@@ -20,10 +20,9 @@ pipeline {
         stage('Clone and Scan with Semgrep') {
             steps {
                 script {
-                    // Klonowanie repozytorium w trybie mirror
-                    sh 'git clone --mirror https://github.com/mt524/abcd-student.git'
+                    
                     // Przechodzenie do katalogu z repozytorium
-                    dir('abcd-student.git') {
+                    dir('/app') {
                         // Uruchomienie trufflehog
                         sh 'semgrep --config auto . --json > /var/jenkins_home/workspace/zd4/results/semgrep.json'
                     }
