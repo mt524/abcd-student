@@ -1,1 +1,46 @@
 semgrep --config auto . --json > wyniki.json
+pipeline {
+    agent any
+    options {
+        skipDefaultCheckout(true)
+    }
+    stages {
+        stage('Code checkout from GitHub') {
+            steps {
+                script {
+                    cleanWs()
+                    git credentialsId: 'github-pat', url: 'https://github.com/mt524/abcd-student', branch: 'main'
+                }
+            }
+        }
+        stage('Prepare') {
+            steps {
+                sh 'mkdir -p results/'
+            }
+        }
+        stage('Clone and Scan with TruffleHog') {
+            steps {
+                script {
+                    // Klonowanie repozytorium w trybie mirror
+                    sh 'git clone --mirror https://github.com/mt524/abcd-student.git'
+                    // Przechodzenie do katalogu z repozytorium
+                    dir('abcd-student.git') {
+                        // Uruchomienie trufflehog
+                        sh 'semgrep --config auto . --json > /var/jenkins_home/workspace/zd4/results/semgrep.json'
+                    }
+                    // Usunięcie katalogu z repozytorium
+                    sh 'rm -rf abcd-student.git'
+                }
+            }
+        }
+        
+    }
+    post {
+        always {
+            echo 'Archiving results...'
+            archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
+            echo 'Sending reports to DefectDojo...'
+            defectDojoPublisher(artifact: 'results/semgrep.json', productName: 'Juice Shop', scanType: 'Semgrep JSON Report', engagementName: 'michal.tomczak@opi.org.pl')
+        }
+    }
+}
