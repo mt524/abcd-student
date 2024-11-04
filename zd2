@@ -30,7 +30,7 @@ post {
             echo 'Archiving results...'
             archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
             echo 'Sending reports to DefectDojo...'
-            defectDojoPublisher(artifact: 'results/results.json', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'michal.tomczak@opi.org.pl')
+            defectDojoPublisher(artifact: 'results/results.json', productName: 'Juice Shop', scanType: 'SCA Scan', engagementName: 'michal.tomczak@opi.org.pl')
        }
     }
 }
