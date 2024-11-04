@@ -1,0 +1,44 @@
+pipeline {
+    agent any
+    options {
+        skipDefaultCheckout(true)
+    }
+    stages {
+        stage('Code checkout from GitHub') {
+            steps {
+                script {
+                    cleanWs()
+                    git credentialsId: 'github-pat', url: 'https://github.com/mt524/abcd-student', branch: 'main'
+                }
+            }
+        }
+        stage('Prepare') {
+            steps {
+                sh 'mkdir -p results/'
+            }
+        }
+        stage('Clone and Scan with TruffleHog') {
+            steps {
+                script {
+                    // Klonowanie repozytorium w trybie mirror
+                    sh 'git clone --mirror https://github.com/mt524/abcd-student.git'
+                    // Przechodzenie do katalogu z repozytorium
+                    dir('abcd-student.git') {
+                        // Uruchomienie trufflehog
+                        sh 'trufflehog git file://. --only-verified --bare --json > /var/jenkins_home/workspace/zd3/results/wyniki.json'
+                    }
+                    // Usunięcie katalogu z repozytorium
+                    sh 'rm -rf abcd-student.git'
+                }
+            }
+        }
+        
+    post {
+        always {
+            echo 'Archiving results...'
+            archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
+            echo 'Sending reports to DefectDojo...'
+            defectDojoPublisher(artifact: 'results/wyniki.json', productName: 'Juice Shop', scanType: 'SCA Scan', engagementName: 'michal.tomczak@opi.org.pl')
+        }
+    }
+}
