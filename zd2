@@ -20,7 +20,7 @@ pipeline {
         stage('SAST') {
             steps {
                 // Running the scanner without interactive terminal
-                sh 'docker exec abcd-lab /bin/bash -c "osv-scanner scan --lockfile /var/jenkins_home/workspace/zd1/package-lock.json > /var/jenkins_home/workspace/zd2/results/results.json"'
+                sh 'docker exec abcd-lab /bin/bash -c "osv-scanner scan --lockfile /var/jenkins_home/workspace/zd1/package-lock.json > /var/jenkins_home/workspace/zd2/results/sca.json"'
                 
                 }
             }
@@ -30,7 +30,7 @@ post {
             echo 'Archiving results...'
             archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
             echo 'Sending reports to DefectDojo...'
-            defectDojoPublisher(artifact: 'results/results.json', productName: 'Juice Shop', scanType: 'SCA Scan', engagementName: 'michal.tomczak@opi.org.pl')
+            defectDojoPublisher(artifact: 'results/sca.json', productName: 'Juice Shop', scanType: 'SCA Scan', engagementName: 'michal.tomczak@opi.org.pl')
        }
     }
 }
