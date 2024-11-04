@@ -1,0 +1,69 @@
+pipeline {
+    agent any
+    options {
+        skipDefaultCheckout(true)
+    }
+    stages {
+        stage('Code checkout from GitHub') {
+            steps {
+                script {
+                    cleanWs()
+                    git credentialsId: 'github-pat', url: 'https://github.com/mt524/abcd-student', branch: 'main'
+                }
+            }
+        }
+        stage('Prepare') {
+            steps {
+                sh 'mkdir -p results/'
+            }
+        }
+        stage('DAST') {
+            steps {
+                // Usuń istniejący kontener zap, jeśli istnieje
+                sh 'docker rm -f zap || true'
+                sh 'docker stop juice-shop || true'
+    
+                // Uruchom kontener juice-shop
+                sh '''
+                    docker run --name juice-shop -d --rm -p 3000:3000 bkimminich/juice-shop
+                    sleep 10
+                '''
+       
+                // Uruchom kontener zap z podmontowaniem katalogu results
+
+               sh '''
+                    chmod 777 ${WORKSPACE}/results
+                    docker run --name zap \
+                        -v /home/Projects/abcd-student/.zap:/zap/wrk/:rw \
+                        -v ${WORKSPACE}/results:/zap/wrk/reports:rw \
+                        -t --user root ghcr.io/zaproxy/zaproxy:stable bash -c "
+                            echo 'skanowanie';
+                            zap.sh -cmd -addonupdate; 
+                            zap.sh -cmd -addoninstall communityScripts -addoninstall pscanrulesAlpha -addoninstall pscanrulesBeta -autorun /zap/wrk/passive.yaml
+
+                            cp /zap/wrk/reports/zap_html_report.html /zap/wrk/;
+                            cp /zap/wrk/reports/zap_xml_report.xml /zap/wrk/;
+                        
+                        "
+                '''
+                sh 'docker cp zap:/zap/wrk/reports/zap_html_report.html ${WORKSPACE}/results/zap_html_report.html'
+                sh 'docker cp zap:/zap/wrk/reports/zap_xml_report.xml ${WORKSPACE}/results/zap_xml_report.xml'
+            }
+        }
+        stage('Clean Up Containers') {
+            steps {
+                // Zatrzymaj i usuń kontenery
+                sh 'docker stop zap juice-shop || true'
+                sh 'docker rm zap || true'
+            }
+        }
+    }
+    post {
+        always {
+            echo 'Archiving results...'
+            archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
+            echo 'Sending reports to DefectDojo...'
+            defectDojoPublisher(artifact: 'results/zap_xml_report.xml', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'michal.tomczak@opi.org.pl')
+       }
+    }
+}
