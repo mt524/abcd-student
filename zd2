@@ -21,7 +21,7 @@ pipeline {
             steps {
                 // Running the scanner without interactive terminal
                 sh 'docker exec abcd-lab /bin/bash -c "osv-scanner scan --lockfile /var/jenkins_home/workspace/zd1/package-lock.json > /var/jenkins_home/workspace/zd1/results/results.json"'
-                sh 'docker cp abcd-lab:/var/jenkins_home/workspace/zd1/results/results.json ${WORKSPACE}/results/zap_html_report.html'/var/jenkins_home/workspace/zd1/results/results.json
+                sh 'docker cp abcd-lab:/var/jenkins_home/workspace/zd1/results/results.json ${WORKSPACE}/results/results.json
                 }
             }
         }
