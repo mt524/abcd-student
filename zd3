@@ -25,7 +25,7 @@ pipeline {
                     // Przechodzenie do katalogu z repozytorium
                     dir('abcd-student.git') {
                         // Uruchomienie trufflehog
-                        sh 'trufflehog git file://. --only-verified --bare --json > wyniki.json'
+                        sh 'trufflehog git file://. --only-verified --bare --json > /var/jenkins_home/workspace/zd3/results/TruffleHog.json'
                     }
                     // Usunięcie katalogu z repozytorium
                     sh 'rm -rf abcd-student.git'
@@ -39,7 +39,7 @@ pipeline {
             echo 'Archiving results...'
             archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
             echo 'Sending reports to DefectDojo...'
-            defectDojoPublisher(artifact: 'results/wyniki.json', productName: 'Juice Shop', scanType: 'SCA Scan', engagementName: 'michal.tomczak@opi.org.pl')
+            defectDojoPublisher(artifact: 'results/TruffleHog.json', productName: 'Juice Shop', scanType: 'sekrety Scan', engagementName: 'michal.tomczak@opi.org.pl')
         }
     }
 }
