@@ -41,4 +41,5 @@ pipeline {
             defectDojoPublisher(artifact: 'results/wyniki.json', productName: 'Juice Shop', scanType: 'SCA Scan', engagementName: 'michal.tomczak@opi.org.pl')
         }
     }
+  }
 }
