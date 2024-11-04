@@ -1,4 +1,4 @@
-pipeline {
+ult/pipeline {
     agent any
     options {
         skipDefaultCheckout(true)
@@ -24,7 +24,7 @@ pipeline {
                     if (result != 0) {
                         error "SAST scan failed with exit code ${result}"
                     }
-                    sh 'docker cp abcd-lab:/var/jenkins_home/workspace/zd1/results.json ${WORKSPACE}/results/results.json' // Adjust path accordingly
+                    sh 'docker cp abcd-lab:/var/jenkins_home/workspace/zd1/results/results.json ${WORKSPACE}/results/results.json' // Adjust path accordingly
                 }
             }
         }
