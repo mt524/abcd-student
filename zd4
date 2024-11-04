@@ -17,7 +17,7 @@ pipeline {
                 sh 'mkdir -p results/'
             }
         }
-        stage('Clone and Scan with TruffleHog') {
+        stage('Clone and Scan with Semgrep') {
             steps {
                 script {
                     // Klonowanie repozytorium w trybie mirror
