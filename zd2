@@ -12,12 +12,30 @@ pipeline {
                 }
             }
         }
+        stage('Prepare') {
+            steps {
+                sh 'mkdir -p results/'
+            }
+        }
         stage('SAST') {
             steps {
-                // Running the scanner without interactive terminal
-                sh 'docker exec abcd-lab /bin/bash -c "osv-scanner scan --lockfile /var/jenkins_home/workspace/zd1/package-lock.json > /var/jenkins_home/workspace/zd1/results/results.json"'
+                script {
+                    def result = sh(script: 'docker exec abcd-lab /bin/bash -c "osv-scanner scan --lockfile /var/jenkins_home/workspace/zd1/package-lock.json"', returnStatus: true)
+                    if (result != 0) {
+                        error "SAST scan failed with exit code ${result}"
+                    }
+                    sh 'docker cp abcd-lab:/path/to/results.json ${WORKSPACE}/results/results.json' // Adjust path accordingly
+                }
             }
         }
     }
-    
+    post {
+        always {
+            echo 'Archiving results...'
+            archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
+            echo 'Sending reports to DefectDojo...'
+            defectDojoPublisher(artifact: 'results/results.json', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'michal.tomczak@opi.org.pl')
+        }
+    }
 }
+
