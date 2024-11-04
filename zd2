@@ -24,18 +24,10 @@ pipeline {
                     if (result != 0) {
                         error "SAST scan failed with exit code ${result}"
                     }
-                    sh 'docker cp abcd-lab:/path/to/results.json ${WORKSPACE}/results/results.json' // Adjust path accordingly
+                    sh 'docker cp abcd-lab:/var/jenkins_home/workspace/zd1/results.json ${WORKSPACE}/results/results.json' // Adjust path accordingly
                 }
             }
         }
     }
-    post {
-        always {
-            echo 'Archiving results...'
-            archiveArtifacts artifacts: 'results/**/*', fingerprint: true, allowEmptyArchive: true
-            echo 'Sending reports to DefectDojo...'
-            defectDojoPublisher(artifact: 'results/results.json', productName: 'Juice Shop', scanType: 'ZAP Scan', engagementName: 'michal.tomczak@opi.org.pl')
-        }
-    }
-}
+  }
 
